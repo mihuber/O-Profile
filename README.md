@@ -2,7 +2,7 @@
 
 Draw height profile of orienteering courses using OCAD "ClassesV8.txt" export and a csv-table with control heights.
 
-## Usage
+## usage
 `O-Profile.Rmd`
 
 - path = "path/to/directory"
