@@ -1,0 +1,54 @@
+---
+title: "O-Profile"
+output: html_notebook
+---
+Draw height profile of orienteering courses using ocad "ClassesV8.txt" export and csv table with control heights.
+
+### Data
+```{r}
+path = "/Users/Michael/Documents/Orienteering/O-Profile/"
+classes_file = "ClassesV8.txt"
+height_file = "control_height.csv"
+```
+
+```{r, read data, echo = FALSE}
+library("tidyverse")
+classes = read.csv(paste0(path, classes_file), header = FALSE, sep = ";", fill = TRUE)
+control_height = read.csv(paste0(path, height_file), header = TRUE, sep = ",")[,2]
+names(control_height) = read.csv(paste0(path, height_file), header = TRUE, sep = ",")[,1]
+```
+
+```{r, construct tidy data frame, echo = FALSE}
+df.all = data.frame()
+for (i in 1:nrow(classes)) {
+    n = classes[i,] %>% is.numeric() %>% is.finite() %>% sum()
+    n = sum(is.finite(as.numeric(classes[i,][seq(7, ncol(classes[i,]), 2)])))
+    #####ctrl = classes[i,seq(6, 2*n+6, 2)] %>% as.vector() %>% gsub(" ","F", .)
+    ctrl = as.vector(t(classes)[,i][seq(6, 2*n+6, 2)])
+    ctrl = gsub(" ","",ctrl)
+    dist = classes[i,seq(7, 2*(n-1)+7, 2)] %>% unlist() %>% append(0, 0)
+    height = control_height[ctrl]
+    
+    df.class = data.frame(ctrl = ctrl, dist = dist, height = height) %>%
+        mutate(class = classes[i,1]) %>%
+        mutate(start = ctrl[1]) %>%
+        mutate(sex = substr(class,1,1)) %>%
+        #####mutate(height2 = control_height[ctrl]) %>%
+        mutate(length = cumsum(dist))
+    df.all = rbind(df.all, df.class)
+}
+```
+
+### plot data
+```{r, echo = FALSE}
+p = ggplot(data=df.all, aes(x=length, y=height, colour=class, label=ctrl, linetype=start, shape = sex)) +
+    geom_line() +
+    geom_point() +
+    coord_fixed(ratio=0.01) +
+    scale_x_continuous(breaks=seq(min(df.all$length), max(df.all$length), 1)) +
+    scale_y_continuous(breaks=seq(min(df.all$height), max(df.all$height), 50)) +
+    guides(col=guide_legend(nrow=24)) +
+    geom_text(aes(label=ctrl),hjust=-.5, vjust=-.5, size=2)
+print(p)
+ggsave(paste(path, "O-Profile.pdf", sep = ""), p, width = 30/2.54, height = 21/2.54)
+```
