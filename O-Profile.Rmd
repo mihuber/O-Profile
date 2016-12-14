@@ -21,19 +21,15 @@ names(control_height) = read.csv(paste0(path, height_file), header = TRUE, sep =
 ```{r, construct tidy data frame, echo = FALSE}
 df.all = data.frame()
 for (i in 1:nrow(classes)) {
-    n = classes[i,] %>% is.numeric() %>% is.finite() %>% sum()
     n = sum(is.finite(as.numeric(classes[i,][seq(7, ncol(classes[i,]), 2)])))
-    #####ctrl = classes[i,seq(6, 2*n+6, 2)] %>% as.vector() %>% gsub(" ","F", .)
-    ctrl = as.vector(t(classes)[,i][seq(6, 2*n+6, 2)])
-    ctrl = gsub(" ","",ctrl)
+    ctrl = as.vector(t(classes)[,i][seq(6, 2*n+6, 2)]) %>% gsub(" ","", .)
     dist = classes[i,seq(7, 2*(n-1)+7, 2)] %>% unlist() %>% append(0, 0)
-    height = control_height[ctrl]
-    
-    df.class = data.frame(ctrl = ctrl, dist = dist, height = height) %>%
+
+    df.class = data.frame(ctrl = ctrl, dist = dist) %>%
         mutate(class = classes[i,1]) %>%
         mutate(start = ctrl[1]) %>%
         mutate(sex = substr(class,1,1)) %>%
-        #####mutate(height2 = control_height[ctrl]) %>%
+        mutate(height = control_height[as.character(ctrl)]) %>%
         mutate(length = cumsum(dist))
     df.all = rbind(df.all, df.class)
 }
